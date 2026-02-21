@@ -1,0 +1,11 @@
+name: OnyxHomes
+version: '1.0.0'
+main: com.timedust.onyxHomes.OnyxHomes
+api-version: '1.21'
+authors: [ TimeDust42 ]
+
+commands:
+  home:
+    description: "Okay"
+  sethome:
+    description: "Okay"

@@ -1,0 +1,3 @@
+auto-save:
+  enabled: true
+  interval: 600
