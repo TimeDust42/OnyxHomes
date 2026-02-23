@@ -35,7 +35,7 @@ public final class OnyxHomes extends JavaPlugin {
         homeManager = new HomeManager();
         pluginConfig = new PluginConfig(this);
         configManager = new ConfigManager(this, homeManager);
-        teleportManager = new TeleportManager(this);
+        teleportManager = new TeleportManager(this, pluginConfig);
 
         pluginConfig.loadConfig();
         configManager.loadHomes();

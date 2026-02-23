@@ -1,3 +1,15 @@
 auto-save:
   enabled: true
   interval: 600
+
+messages:
+  teleport:
+    success:
+      line1: "<green><b>Успех"
+      line2: ""
+    cancel:
+      line1: "<red><b>Отменено"
+      line2: "<gray><b>Вы сдвинулись"
+    process:
+      line1: "<yellow><b>Телепортация через <time>"
+      line2: ""
