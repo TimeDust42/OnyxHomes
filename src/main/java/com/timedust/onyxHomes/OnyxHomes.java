@@ -1,35 +1,52 @@
 package com.timedust.onyxHomes;
 
+import com.timedust.onyxHomes.commands.DeleteHomeCommand;
 import com.timedust.onyxHomes.commands.HomeCommand;
 import com.timedust.onyxHomes.commands.SetHomeCommand;
-import com.timedust.onyxHomes.config.ConfigManager;
+import com.timedust.onyxHomes.data.Config;
+import com.timedust.onyxHomes.data.ConfigManager;
 import com.timedust.onyxHomes.homes.HomeManager;
+import com.timedust.onyxHomes.teleport.TeleportManager;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.File;
 import java.util.Objects;
 
 public final class OnyxHomes extends JavaPlugin {
 
     private HomeManager homeManager;
+    private Config config;
     private ConfigManager configManager;
+    private TeleportManager teleportManager;
+    private File homesConfig;
 
     private BukkitTask autoSaveTask;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
-        saveResource("homes.yml", false);
+
+        homesConfig = new File(getDataFolder(), "homes.yml");
+
+        if (!homesConfig.exists()) {
+            saveResource("homes.yml", false);
+        }
 
         homeManager = new HomeManager();
+        config = new Config(this);
         configManager = new ConfigManager(this, homeManager);
+        teleportManager = new TeleportManager(this);
 
-        configManager.load();
-        configManager.loadConfig();
+        config.loadConfig();
+        configManager.loadHomes();
 
-        Objects.requireNonNull(getCommand("home")).setExecutor(new HomeCommand(homeManager));
+        getServer().getPluginManager().registerEvents(teleportManager, this);
+
+        Objects.requireNonNull(getCommand("home")).setExecutor(new HomeCommand(homeManager, teleportManager));
         Objects.requireNonNull(getCommand("sethome")).setExecutor(new SetHomeCommand(homeManager));
+        Objects.requireNonNull(getCommand("delhome")).setExecutor(new DeleteHomeCommand(homeManager));
 
         startAutoSaveTask();
     }
@@ -37,8 +54,8 @@ public final class OnyxHomes extends JavaPlugin {
     @Override
     public void onDisable() {
         this.getLogger().info("Сохранение домов...");
-        configManager.save();
-        configManager.saveConfig();
+        config.saveConfig();
+        configManager.saveHomes();
 
         if (autoSaveTask != null) {
             autoSaveTask.cancel();
@@ -51,16 +68,17 @@ public final class OnyxHomes extends JavaPlugin {
         }
 
         this.reloadConfig();
-        configManager.loadConfig();
+        config.loadConfig();
 
         startAutoSaveTask();
     }
 
     public void startAutoSaveTask() {
-        if (configManager.isAutoSaveEnabled()) {
-            int interval = configManager.getInterval();
+        if (config.isAutoSaveEnabled()) {
+            this.getLogger().info("Auto-save started");
+            int interval = config.getInterval();
             autoSaveTask = Bukkit.getScheduler().runTaskTimerAsynchronously(this, () -> {
-                configManager.save();
+                configManager.saveHomes();
                 this.getLogger().info("Бэкап домов");
             }, 20L * interval, 20L * interval);
         }

@@ -2,6 +2,7 @@ package com.timedust.onyxHomes.commands;
 
 import com.timedust.onyxHomes.homes.HomeManager;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -28,19 +29,43 @@ public class SetHomeCommand implements CommandExecutor {
             return true;
         }
 
+        UUID uuid = player.getUniqueId();
+        Location loc = player.getLocation();
+
         if (args.length == 0) {
-            player.sendMessage(mm.deserialize("<red> Использование: /sethome [home_name]"));
+            manager.addHome(uuid, "home", loc);
+
+            player.sendMessage(mm.deserialize("<green>Дом установлен!"));
             return true;
         }
 
         if (args.length == 1) {
-            UUID uuid = player.getUniqueId();
             String homeName = args[0];
-            Location loc = player.getLocation();
+
+            if (manager.hasHome(uuid, homeName)) {
+                player.sendMessage(mm.deserialize(
+                        "<gray>⚡ <yellow>Точка <white><home></white> уже установлена.</gray><newline>" +
+                                "<dark_gray>» </dark_gray>" +
+                                "<green><bold><click:run_command:/sethome <home> confirm>[ПЕРЕЗАПИСАТЬ]</click></bold></green> " +
+                                "<gray>или</gray> " +
+                                "<red><bold><click:run_command:/cancel>[ОТМЕНА]</click></bold></red>",
+                        Placeholder.parsed("home", homeName)
+                ));
+                return true;
+            }
 
             manager.addHome(uuid, homeName, loc);
 
-            player.sendMessage(mm.deserialize("<green>Дом " + homeName + " установлен!"));
+            player.sendMessage(mm.deserialize("<green>Дом <aqua>home</aqua> установлен!", Placeholder.parsed("home", homeName)));
+            return true;
+        }
+
+        if (args.length == 2 && args[1].equalsIgnoreCase("confirm")) {
+            String homeName = args[0];
+
+            manager.addHome(uuid, homeName, loc);
+
+            player.sendMessage(mm.deserialize("<green>Дом <aqua>home</aqua> установлен!", Placeholder.parsed("home", homeName)));
             return true;
         }
         return false;

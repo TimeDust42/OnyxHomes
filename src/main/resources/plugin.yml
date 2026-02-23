@@ -9,3 +9,5 @@ commands:
     description: "Okay"
   sethome:
     description: "Okay"
+  delhome:
+    description: "Okay"
