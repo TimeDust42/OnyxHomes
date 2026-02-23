@@ -1,11 +1,15 @@
 package com.timedust.onyxHomes.teleport;
 
+import com.timedust.onyxHomes.data.PluginConfig;
 import com.timedust.onyxHomes.homes.Home;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Particle;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,42 +24,55 @@ import java.util.UUID;
 public class TeleportManager implements Listener {
 
     private final JavaPlugin plugin;
+    private final PluginConfig config;
 
     private final MiniMessage mm = MiniMessage.miniMessage();
 
     private final Map<UUID, BukkitTask> teleportTasks = new HashMap<>();
 
-    public TeleportManager(JavaPlugin plugin) {
+    public TeleportManager(JavaPlugin plugin, PluginConfig config) {
         this.plugin = plugin;
+        this.config = config;
     }
 
     public void teleportWithDelay(Player player, Location location) {
         UUID uuid = player.getUniqueId();
-
-        if (teleportTasks.containsKey(uuid)) {
-            teleportTasks.get(uuid).cancel();
-        }
+        if (teleportTasks.containsKey(uuid)) teleportTasks.get(uuid).cancel();
 
         Location startLoc = player.getLocation();
-        final int[] seconds = {3};
+
+        location.getChunk().load(true);
+
+        final int[] ticksLeft = {60};
 
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (!startLoc.getWorld().equals(player.getWorld()) || startLoc.distance(player.getLocation()) > 0.1) {
-                player.showTitle(Title.title(mm.deserialize("<red>Отменено"), mm.deserialize("<gray>Вы сдвинулись")));
+                player.showTitle(Title.title(config.getTeleportCancelOne(), config.getTeleportCancelTwo()));
                 stopTask(uuid);
                 return;
             }
 
-            if (seconds[0] <= 0) {
-                player.teleport(location);
-                player.showTitle(Title.title(mm.deserialize("<green>Успех"), Component.empty()));
+            if (ticksLeft[0] % 20 == 0) {
+                int secondsVisible = ticksLeft[0] / 20;
+
+                if (secondsVisible > 0) {
+                    player.showTitle(Title.title(config.getTeleportProcessOne(secondsVisible), config.getTeleportProcessTwo()));
+                }
+            }
+
+            if (ticksLeft[0] <= 0) {
+                player.teleportAsync(location).thenAccept(success -> {
+                    if (success) {
+                        player.showTitle(Title.title(config.getTeleportSuccessOne(), config.getTeleportSuccessTwo()));
+                        location.getWorld().spawnParticle(Particle.END_ROD, location.clone().add(0, 1, 0), 30, 0.5, 0.5, 0.5, 0.1);
+                    }
+                });
                 stopTask(uuid);
                 return;
             }
 
-            player.showTitle(Title.title(mm.deserialize("<yellow>Ждите..."), mm.deserialize("<gray>" + seconds[0])));
-            seconds[0]--;
-        }, 0L, 20L);
+            ticksLeft[0] -= 2;
+        }, 0L, 2L);
 
         teleportTasks.put(uuid, task);
     }
