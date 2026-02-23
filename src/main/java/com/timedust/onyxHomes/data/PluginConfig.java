@@ -2,14 +2,14 @@ package com.timedust.onyxHomes.data;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class Config {
+public class PluginConfig {
 
     private final JavaPlugin plugin;
 
     private boolean isAutoSaveEnabled;
     private int interval;
 
-    public Config(JavaPlugin plugin) {
+    public PluginConfig(JavaPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -33,6 +33,7 @@ public class Config {
 
     public void setAutoSaveEnabled(boolean autoSaveEnabled) {
         isAutoSaveEnabled = autoSaveEnabled;
+        saveConfig();
     }
 
     public int getInterval() {
@@ -41,5 +42,6 @@ public class Config {
 
     public void setInterval(int interval) {
         this.interval = interval;
+        saveConfig();
     }
 }
