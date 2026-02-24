@@ -1,6 +1,9 @@
 package com.timedust.onyxHomes.homes;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,5 +58,30 @@ public class HomeManager {
         } else {
             return null;
         }
+    }
+
+    public int getPlayerHomeLimit(UUID uuid) {
+        Player player = Bukkit.getPlayer(uuid);
+        int max = 1;
+
+        for (PermissionAttachmentInfo attachmentInfo : player.getEffectivePermissions()) {
+            String permission = attachmentInfo.getPermission();
+
+            if (permission.startsWith("onyxhomes.limit.")) {
+                try {
+                    String value = permission.substring(permission.lastIndexOf('.') + 1);
+                    int limit = Integer.parseInt(value);
+
+                    if (limit > max) {
+                        max = limit;
+                    }
+                } catch (NumberFormatException e) {}
+            }
+        }
+        return max;
+    }
+
+    public int getCountPlayersHome(UUID uuid) {
+        return homeList.getOrDefault(uuid, Collections.emptyMap()).size();
     }
 }
